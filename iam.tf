@@ -12,6 +12,7 @@ resource "aws_iam_role" "role" {
           "ssm:GetParameters",
           "ssm:GetParameter"
         ]
+        # Specify resource arn here Resource = "arn:aws:ssm:us-east-1"
         Sid = "VisualEditor0"
         Effect = "Allow"
         Principal = {
@@ -36,6 +37,7 @@ resource "aws_iam_role" "codepipeline_role" {
           "ssm:GetParameters",
           "ssm:GetParameter"
         ]
+        # Specify resource arn here Resource = "arn:aws:ssm:us-east-1"
         Sid = "VisualEditor0"
         Effect = "Allow"
         Principal = {
