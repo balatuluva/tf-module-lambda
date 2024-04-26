@@ -57,7 +57,7 @@ resource "aws_lambda_function" "lambda" {
 
   environment {
     variables = {
-      MONGODB_SECRETS = "arn:aws"
+      #MONGODB_SECRETS = "arn:aws"
     }
   }
 
@@ -72,8 +72,14 @@ resource "aws_codepipeline" "lambda_pipeline" {
   role_arn = aws_iam_role.codepipeline_role.arn
 
   artifact_store {
-    location = "uat-lambda-builds"
+    location = S3_bucket_location
     type     = "S3"
+    region = "us-east-1"
+
+    encryption_key {
+      id = aws_kms_alias_s3_key
+      type = "KMS"
+    }
   }
 
   stage {
@@ -81,17 +87,58 @@ resource "aws_codepipeline" "lambda_pipeline" {
     action {
       category = "${}"
       name     = "${}"
-      owner    = "${Bala}"
+      owner    = "${}"
       provider = "${}"
       version  = "1.0.0"
-      output_artifacts = ["o/p"]
+      output_artifacts = ["source_o/p"]
 
       configuration = {
-        Owner = "${Bala}"
+        Owner = "${}"
         Repo = "lambda-repo"
         Branch = "develop"
-        OAuthToken = "topken"
       }
     }
+  }
+  stage {
+    name = "Build"
+    action {
+      category = "${}"
+      name     = "${}"
+      owner    = "${}"
+      provider = "${}"
+      input_artifacts = ["source_o/p"]
+      output_artifacts = ["build_o/p"]
+      version  = "1.0.0"
+
+      configuration = {
+        ProjectName = "uat-lambda"
+      }
+    }
+  }
+  stage {
+    name = "Deploy"
+    action {
+      category = "${}"
+      name     = "${}"
+      owner    = "${}"
+      provider = "${}"
+      input_artifacts = ["build_o/p"]
+      version  = "1.0.0"
+
+      configuration = {
+        ActionMode = Replace_on_failure
+      }
+    }
+  }
+}
+
+resource "aws_codepipeline_webhook" "trigger" {
+  authentication  = "${}"
+  name            = "${}"
+  target_action   = "Source"
+  target_pipeline = aws_codepipeline.lambda_pipeline.name
+
+  authentication_configuration {
+    secret_token = local.webhook_secret
   }
 }
